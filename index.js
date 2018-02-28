@@ -31,7 +31,6 @@ function getTopMangas() {
     }, 10000);
   }
 }
-console.log("useless console log");
 
 getTopMangas();
 console.log(mangasList);
