@@ -33,3 +33,4 @@ function getTopMangas() {
 }
 
 getTopMangas();
+console.log(mangasList);
