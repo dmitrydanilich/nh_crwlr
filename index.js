@@ -1,36 +1,37 @@
-const cheerio = require("cheerio");
-var rp = require("request-promise");
+const puppeteer = require('puppeteer');
 
-let mangasList = [];
+async function scrape() {
+  let mangasList = [];
 
-function getTopMangas() {
-  for (var i = 1; i < 50; i++) {
-    var url = `https://nhentai.net/g/${i}/`;
-    setTimeout(function(i) {
-      rp(url)
-        .then(function(pageData) {
-          const $ = cheerio.load(pageData);
-          $(".buttons").each(function(index, element) {
-            mangasList[index] = {};
-            var rating = $(element)
-              .find("span")
-              .find("span")
-              .html();
-            rating = rating.replace(/[{()}]/g, "");
-            if (rating > 500) {
-              mangasList[i]["url"] = url;
-              mangasList[i]["rating"] = rating;
-            } else {
-              console.log(url + " rating is under 500");
-            }
-          });
-        })
-        .catch(function(err) {
-          console.log(err, "ERROR");
-        });
-    }, 10000);
+  for(var i = 16000;i<16010;i++) {
+    const browser = await puppeteer.launch({args: ['--disable-setuid-sandbox', '--no-sandbox']});
+    const page = await browser.newPage();
+    await page.setJavaScriptEnabled(false);
+    let url = `https://nhentai.net/g/${i}/`;
+    await page.goto(url);
+  
+    const result = await page.evaluate(() => {
+      try {
+        let title = document.querySelector('h1').innerText;
+        let rating = +document.querySelector('.nobold').innerText.replace(/[{()}]/g, "");
+        if (+rating > 2000) {
+          return {title, rating};
+        }
+      } catch (e) {
+        console.log('Ошибка ' + e.name + ":" + e.message + "\n" + e.stack);
+      }
+
+    });
+    
+    await browser.close();
+    if(typeof result !== 'undefined') {
+      result.url = url;
+      mangasList.push(result);
+    }
   }
+  return mangasList;
 }
 
-getTopMangas();
-console.log(mangasList);
+scrape().then((value) => {
+  console.log(value);
+});
